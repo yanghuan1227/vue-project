@@ -60,49 +60,54 @@
 <script>
 import { getAllUsers } from "@/api/users-index";
 export default {
-  data() {
-    return {
-      total: 0,
-      status: true,
-      userList: [],
-      userobj: {
-        query: "",
-        pagenum: 2,
-        pagesize: 2
-      }
-    };
-  },
-  methods: {
-    // 当切换sizes下拉列表时触发
-    handleSizeChange(val) {
-      this.userobj.pagesize = val;
-      this.init();
-    },
-    // 当切换当前页码是触发
-    handleCurrentChange(val) {
-      // 修改参数
-      this.userobj.pagenum = val;
-      // 重新请求
-      this.init();
-    },
-    // 数据获取
-    init() {
-      getAllUsers(this.userobj)
-        .then(res => {
-          console.log(res);
-          if (res.data.meta.status === 200) {
-            this.userList = res.data.data.users;
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        });
+data () {
+  return {
+    total:0,
+    status:true,
+    userList:[],
+    userobj:{
+      query:'',
+      pagenum:1,
+      pagesize:2
     }
-  },
-  mounted() {
-    this.init();
   }
-};
+},
+ methods: {
+    // 当切换size下拉列表时触发
+    handleSizeChange(val){
+      this.userobj.pagesize = val
+      this.init()
+    },
+    handleCurrentChange(val){
+      // 1.修改参数
+      this.userobj.pagenum = val
+      // 2.重新请求
+      this.init()
+    },
+// 数据获取
+    init(){
+      getAllUsers(this.userobj)
+      .then(res=>{
+        console.log(res)
+        if(res.data.meta.status === 200){
+          this.userList =  res.data.data.users
+          // 获取总记录数
+          this.total = res.data.data.total
+        }else if(res.data.meta.status === 400){
+          this.$message.error(res.data.meta.msg)
+          this.$router.push({name:'login'})
+        }
+      })
+      .catch(err=>{
+        console.log(err)
+      })
+    }   
+},
+mounted () {
+  this.init()
+}
+}
+
 </script>
 
 <style lang="less">
