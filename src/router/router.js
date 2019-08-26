@@ -5,7 +5,8 @@ import Login from '@/views/login.vue'
 import Home from '@/views/home.vue'
 import Welcome from '@/views/welcome.vue'
 import Users from '@/views/users/users.vue'
-
+import RightsList from '@/views/rights/rightsList.vue'
+import RolesList from '@/views/rights/rolesList.vue'
 Vue.use(VueRouter)
 
 // 创建路由对象
@@ -38,7 +39,18 @@ export default new VueRouter({
       name: 'users',
       path: 'users',
       component: Users
-    }]
+    },
+    {
+      name: 'rights',
+      path: 'rights',
+      component: RightsList
+    },
+    {
+      name: 'roles',
+      path: 'roles',
+      component: RolesList
+    }
+    ]
   }
   ]
 })
