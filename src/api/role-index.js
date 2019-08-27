@@ -17,12 +17,10 @@ export const delRightByRoleId = (roleId, rightId) => {
 }
 
 // 为指定角色授权
-export const grantRoleById = (roleId,rids) =>{
+export const grantRoleById = (roleId, rids) => {
   return axios({
-    method:'post',
-    url:`roles/${roleId}/rights`,
-    data: {rids}
+    method: 'post',
+    url: `roles/${roleId}/rights`,
+    data: { rids }
   })
 }
-
-
