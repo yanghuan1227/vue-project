@@ -211,27 +211,29 @@ export default {
                 this.$message({
                   type: "success",
                   message: "删除成功"
-                })
-                // if($('tbody>td').length == 1){
-                //         if(pageNum > 1){
-                //             pageNum --
-                //         }
-                //     }
-                // 不能就这么刷新
-                this.init()
+                });
+                // 需求：如果当前这页经过删除，没有任何数据了，那么应该自动跳转上一页
+                // 所谓上一页，就是讲userObj.pagenum --
+                //  业务：先删除，再刷新，意味着这页如果真的只有一条数据，那么经过这一次的删除操作，在刷新之前，还是有一条数据的
+                this.userobj.pagenum =
+                  Math.ceil((this.total - 1) / this.userobj.pagesize) <
+                  this.userobj.pagenum
+                    ? --this.userobj.pagenum
+                    : this.userobj.pagenum;
+                this.init();
               } else {
                 this.$message({
                   type: "error",
                   message: res.data.meta.msg
-                })
+                });
               }
             })
             .catch(() => {
               this.$message({
                 type: "error",
                 message: "删除失败"
-              })
-            })
+              });
+            });
         })
         .catch(() => {
           this.$message({
@@ -257,7 +259,7 @@ export default {
             });
           }
         })
-        .catch(err => {
+        .catch(() => {
           this.$message({
             type: "error",
             message: "修改状态失败"

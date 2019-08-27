@@ -2,7 +2,7 @@
 import axios from 'axios'
 
 // 获取所有的用户数据
-export const getAllRolesList = () => {
+export const getAllRoleList = () => {
   return axios({
     url: 'roles'
   })
@@ -15,3 +15,14 @@ export const delRightByRoleId = (roleId, rightId) => {
     url: `roles/${roleId}/rights/${rightId}`
   })
 }
+
+// 为指定角色授权
+export const grantRoleById = (roleId,rids) =>{
+  return axios({
+    method:'post',
+    url:`roles/${roleId}/rights`,
+    data: {rids}
+  })
+}
+
+

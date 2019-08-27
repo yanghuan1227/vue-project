@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import { getAllRightsList } from "@/api/right-index";
+import { getAllRightsList } from "@/api/right-index"
 export default {
   data() {
     return {
