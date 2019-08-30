@@ -1,5 +1,5 @@
 <template>
-  <div class="rolesList">
+  <div class="roleList">
     <!-- 面包屑 -->
     <el-breadcrumb separator-class="el-icon-caret-right">
       <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
@@ -7,9 +7,9 @@
       <el-breadcrumb-item>角色列表</el-breadcrumb-item>
     </el-breadcrumb>
     <!-- 按钮添加 -->
-    <el-button type="success">添加角色</el-button>
+    <el-button type="success" @click="addRoleDialogFormVisible = true">添加角色</el-button>
     <!-- 表格 -->
-    <el-table :data="rolesList" border style="width: 100%;margin-top:15px">
+    <el-table :data="roleList" border style="width: 100%;margin-top:15px">
       <el-table-column type="expand">
         <template slot-scope="scope">
           <!-- 这个内容在我们的项目中需要我们自己来生成 -->
@@ -22,7 +22,7 @@
               <el-tag
                 closable
                 :type="'success'"
-                @close="delRight(scope.row,first.id)"
+                @close="cnt=0;delRight(scope.row,first.id)"
               >{{first.authName}}</el-tag>
             </el-col>
             <el-col :span="20">
@@ -31,7 +31,7 @@
                   <el-tag
                     closable
                     :type="'info'"
-                    @close="delRight(scope.row,second.id)"
+                    @close="cnt=0;delRight(scope.row,second.id)"
                   >{{second.authName}}</el-tag>
                 </el-col>
                 <el-col :span="20">
@@ -41,7 +41,7 @@
                     v-for="third in second.children"
                     :key="third.id"
                     style="margin-right:5px;margin-bottom:5px"
-                    @close="delRight(scope.row,third.id)"
+                    @close="cnt=0;delRight(scope.row,third.id)"
                   >{{third.authName}}</el-tag>
                 </el-col>
               </el-row>
@@ -72,9 +72,9 @@
     <!-- 分配权限对话框 -->
     <el-dialog title="权限分配" :visible.sync="grantdialogTableVisible">
       <el-tree
-        :data="rightsList"
-        show-checkbox
+        :data="rightList"
         ref="tree"
+        show-checkbox
         node-key="id"
         :default-expand-all="true"
         :default-checked-keys="chkedArr"
@@ -85,66 +85,158 @@
         <el-button type="primary" @click="grantRole">确 定</el-button>
       </div>
     </el-dialog>
+    <!-- 添加角色对话框 -->
+    <el-dialog title="添加用户" :visible.sync="addRoleDialogFormVisible">
+      <el-form :model="addRoleForm" :label-width="'80px'" :rules="rules" ref="addRoleForm">
+        <el-form-item label="角色名称" prop="roleName">
+          <el-input v-model="addRoleForm.roleName" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="角色描述" prop="roleDesc">
+          <el-input v-model="addRoleForm.roleDesc" autocomplete="off"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addRoleDialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="addRole">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 <script>
 import {
   getAllRoleList,
   delRightByRoleId,
-  grantRoleById
+  grantRoleById,
+  addRole
 } from "@/api/role-index.js";
 import { getAllRightsList } from "@/api/right-index.js";
 export default {
   data() {
     return {
-      roleId: [],
+      // 添加角色
+      addRoleDialogFormVisible: false,
+      addRoleForm: {
+        roleName: "",
+        roleDesc: ""
+      },
+      rules: {
+        roleName: [
+          {
+            required: true,
+            message: "请输入角色名称",
+            trigger: "blur"
+          }
+        ],
+        roleDesc: [
+          {
+            required: true,
+            message: "请输入角色描述",
+            trigger: "blur"
+          }
+        ]
+      },
+      roleId: "",
       cnt: 0,
       defaultProps: {
         label: "authName",
         children: "children"
       },
       grantdialogTableVisible: false,
-      rolesList: [],
-      rightsList: [],
+      roleList: [],
+      rightList: [],
       //   当前角色所拥有的权限id
       chkedArr: []
     };
   },
   methods: {
-    // async:标记这个函数中会有异步操作  和await一起使用
+    // 添加角色
+    addRole() {
+      this.$refs.addRoleForm.validate(valid => {
+        if (valid) {
+          addRole(this.addRoleForm)
+            .then(res => {
+              console.log(res);
+              if (res.data.meta.status === 201) {
+                this.$message.success("添加角色成功");
+                this.init();
+                this.addRoleDialogFormVisible = false;
+                // 清空表单数据，重置表单信息
+                this.$refs.addRoleForm.resetFields();
+              }
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        } else {
+          this.$message.error("请输入所有必填数据");
+        }
+      });
+    },
+    // async:标记这个函数中会有异步操作
     // 实现角色授权
     async grantRole() {
+      // 先获取到当前用户所选择所有的权限id,拼接 为以,分隔的字符串
+      // var rids = ''
+      // getCheckedKeys
+      // getCheckedNodes
+      // console.log(this.$refs.tree.getCheckedKeys())
+      // // 取父级节点
+      // console.log(this.$refs.tree.getHalfCheckedKeys())
+      // console.log(this.$refs.tree.getCheckedNodes())
+      // 1.我们有：[{id:109,pid:'107,102'},{id:154,pid:'107,102'}]
       let arr = this.$refs.tree.getCheckedNodes();
+      // console.log(arr)
+      // 2.遍历数组，进行数据的拼接
       let temp = [];
       for (var i = 0; i < arr.length; i++) {
-        temp.push(arr[i].id + "," + arr[i].pid);       
+        temp.push(arr[i].id + "," + arr[i].pid); // ["109,107,102","154,107,102"]
       }
-      // 拼接数组元素在转换为数组
-      temp = temp.join(',').split(',')
-      // 在数组中去重
-      temp = [...new Set(temp)]
+      // console.log(temp)
+      // 3.拼接数组元素再转换为数组
+      temp = temp.join(",").split(","); // [109,107,102,154,107,102]
+      // console.log(temp)
+      // 4.数组才能去重  new Set(数组)可以去除数组中的重复数据，它的返回值是一个Set对象
+      temp = [...new Set(temp)];
+      // console.log(temp.join(','))
 
-      let res = await grantRoleById(this.roleId,temp.join(','))
-        console.log(res)
-        if(res.data.meta.status ===200){
-          this.$message.success(res.data.meta.msg)
-          this.grantdialogTableVisible = false
-          this.init() 
-        }else{
-          this.$message.error(res.data.meta.msg)
-        }
+      // ?.我们要："102,107,109,154"
+      // await：这个关键字是标记后面的是异步操作，我们需要等待这个异步操作执行完毕之后，才进行下一步行为
+      // await必须写在async中，并且async只能加给当前await所在的函数
+      // try{
+
+      // }
+      // catch(exp){}
+      // finally{
+
+      // }
+      let res = await grantRoleById(this.roleId, temp.join(","));
+      console.log(res);
+      if (res.data.meta.status === 200) {
+        this.$message.success(res.data.meta.msg);
+        this.grantdialogTableVisible = false;
+        this.init();
+      } else {
+        this.$message.error(res.data.meta.msg);
+      }
     },
-    // 弹出角色权限对话框
+    // 弹出角色授权对话框
     showGrantDialog(row) {
-      // 这里进行数据的存储是为了后期角色授权时能够正确获取角色id
+      // 这里进行数据的存储是为了后期角色授权时能够正确的获取角色id
       this.roleId = row.id;
-      // 1.让对话框显示
+      // 1.让对话框展示
+      // 2.加载树形组件的数据
+      // 3.获取权限id，让节点默认被选择
       this.grantdialogTableVisible = true;
-      // 2.加载树形结构的数据  深拷贝
-      this.rightsList = [...this.rightsList];
+      // 加载树形组件的数据
+      // getAllRightList('tree').then(res => {
+      //   console.log(res)
+      //   this.rightList = res.data.data
+      // })
+      // 深拷贝
+      this.rightList = [...this.rightList];
       this.chkedArr.length = 0;
-      // 获取当前角色id，添加到chkedArr
-      // 只需要获取最后一级   做一下判断
+      // 获取当前角色的所有权限id,添加到chkedArr
+      // 我们只需要获取最后一级--建议尽量做一个判断
       row.children.forEach(first => {
         if (first.children.length > 0) {
           first.children.forEach(second => {
@@ -158,37 +250,37 @@ export default {
       });
     },
     delRight(row, rightId) {
-      console.log(row.id, rightId);
       delRightByRoleId(row.id, rightId)
         .then(res => {
           console.log(res);
+          if (this.cnt === 0) {
+            this.$message.success("删除角色权限成功");
+            this.cnt++;
+          }
           // 刷新,不要使用init，因为init会刷新整个表格，造成展开行合并
           //   this.init()
           // res.data.data就是实现当前权限删除操作后该角色还拥有的权限数据
           // 为了避免刷新整个表格，我们可以将这个数据重置当前角色的展开行数据
           // 展开行数据：scope.row.children
-          if (this.cnt === 0) {
-            this.$message.success("删除角色权限成功");
-            this.cnt++;
-          }
           row.children = res.data.data;
+          // 判断当前权限是否还有一下级权限，如果没有，则需要将这及权限也删除
           row.children.forEach((v1, in1) => {
             // 遍历一级权限
             if (v1.children.length === 0) {
-              // 说明这个一级权限下面没有二级权限
+              // 说明这个一级权限下没有任何的二级权限
               this.delRight(row, v1.id);
             } else {
               v1.children.forEach((v2, in2) => {
                 if (v2.children.length === 0) {
-                  // 说明这个二级权限下面没有三级权限
+                  // 说明这个二级权限下没有任何的三级权限
                   this.delRight(row, v2.id);
                 }
               });
             }
           });
         })
-        .catch(err => {
-          console.log(err);
+        .catch(er => {
+          console.log(er);
         });
     },
     init() {
@@ -196,7 +288,7 @@ export default {
       getAllRoleList().then(res => {
         console.log(res);
         if (res.data.meta.status === 200) {
-          this.rolesList = res.data.data;
+          this.roleList = res.data.data;
         }
       });
     }
@@ -205,10 +297,10 @@ export default {
     this.init();
     getAllRightsList("tree").then(res => {
       console.log(res);
-      this.rightsList = res.data.data;
+      this.rightList = res.data.data;
     });
   }
-};
+}
 </script>
 <style lang="less" scoped>
 </style>

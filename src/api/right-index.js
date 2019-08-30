@@ -6,3 +6,9 @@ export const getAllRightsList = (type) => {
     url: `rights/${type}`
   })
 }
+
+export const getLeftMenu = (type) => {
+  return axios({
+    url: `menus`
+  })
+}

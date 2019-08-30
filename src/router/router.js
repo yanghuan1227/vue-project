@@ -7,6 +7,9 @@ import Welcome from '@/views/welcome.vue'
 import Users from '@/views/users/users.vue'
 import RightsList from '@/views/rights/rightsList.vue'
 import RolesList from '@/views/rights/rolesList.vue'
+import Goods from '@/views/goods/goods.vue'
+import List from '@/views/goods/list.vue'
+import Add from '@/views/goods/add.vue'
 Vue.use(VueRouter)
 
 // 创建路由对象
@@ -49,6 +52,25 @@ export default new VueRouter({
       name: 'roles',
       path: 'roles',
       component: RolesList
+    },
+    {
+      name: 'goods',
+      path: 'goods',
+      component: Goods,
+      redirect: {
+        name: 'list'
+      },
+      children: [{
+        name: 'list',
+        path: 'list',
+        component: List
+      },
+      {
+        name: 'add',
+        path: 'add',
+        component: Add
+      }]
+
     }
     ]
   }
